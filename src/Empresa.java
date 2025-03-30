@@ -5,6 +5,7 @@ public class Empresa {
 
     private String name;
     private List<Departamento> departamentos = new ArrayList<>();
+    private List<Funcionario> todosFuncionarios =new ArrayList<>();
 
     public Empresa(String name) {
         this.name = name;
@@ -21,5 +22,9 @@ public class Empresa {
 
     public List<Departamento> getDepartamentos() {
         return departamentos;
+    }
+
+    public List<Funcionario> getTodosFuncionarios(){
+        return todosFuncionarios;
     }
 }

@@ -1,5 +1,7 @@
 public class Funcionario {
 
+    private static int LAST_ID = 0;
+    private int id;
     private String name;
     private String cargo;
     private Departamento departamento;
@@ -7,6 +9,7 @@ public class Funcionario {
     public Funcionario(String name, String cargo) {
         this.name = name;
         this.cargo = cargo;
+        this.id = ++LAST_ID;
     }
 
     public void vincularDepto(Departamento depto) {
@@ -19,6 +22,14 @@ public class Funcionario {
 
     public String getCargo() {
         return cargo;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public Departamento getDepartamento(){
+        return departamento;
     }
 
     @Override
