@@ -62,7 +62,9 @@ public class App {
 
     private static void menu(Empresa empresa) {
 
-        while(true) {
+        boolean rodando = true;
+
+        while(rodando) {
             limparTerminal();
             System.out.println("====== TECH SOLUÇÕES ======");
 
@@ -81,16 +83,26 @@ public class App {
                 }
             }
 
-
-            System.out.print("\nFazer login com o funcionário número: ");
+            System.out.print("\nFaça login com seu Id "+
+                        "\n(ou use '99' para encerrar o programa): ");
             int escolha = sc.nextInt();
             sc.nextLine();
 
-            Funcionario escolhido;
-            for (Funcionario func : empresa.getTodosFuncionarios()) {
-                if (func.getId() == escolha) {
-                    menuFuncionario(func);
-                }
+            if (escolha == 99){
+                System.out.println("Encerrando o sistema...");
+                rodando = false;
+                break;
+            } else if (buscarFuncionario(empresa.getTodosFuncionarios(), escolha) != null) {
+                menuFuncionario(buscarFuncionario(empresa.getTodosFuncionarios(), escolha));
+
+            } else if (escolha == 0) {
+                System.out.print("Ainda não desenvolvido...");
+                pausa();
+                //String senha = sc.nextLine();
+
+            } else {
+                System.out.println("Opção inválida. Tente novamente");
+                pausa();
             }
         }
 
@@ -98,7 +110,9 @@ public class App {
 
     private static void menuFuncionario(Funcionario func) {
 
-        while (true) {
+        boolean rodando = true;
+
+        while (rodando) {
             limparTerminal();
 
             System.out.println("=== " + func.getName() + " ===");
@@ -112,15 +126,26 @@ public class App {
 
             int escolha = sc.nextInt();
             switch (escolha) {
-                case 1 -> mostrarInformacoes(func);
-                case 3 -> menu(func.getDepartamento().empresa);
+                case 1:
+                    limparTerminal();
+                    rodando = false;
+                    realizarPedido(func);
+                    break;
+                case 2:
+                    limparTerminal();
+                    rodando = false;
+                    mostrarInformacoes(func);
+                    break;
+                case 3:
+                    rodando = false;
+                    limparTerminal();
+                    break;
 
             }
         }
     }
 
     private static void mostrarInformacoes(Funcionario func) {
-        limparTerminal();
         System.out.println("SUAS INFORMAÇÕES\n");
         System.out.println("Id: " + func.getId());
         System.out.println("Nome: " + func.getName());
@@ -129,10 +154,27 @@ public class App {
         pausa();
     }
 
+    public static void realizarPedido(Funcionario func){
+        System.out.println("Funcionalidade ainda não feita");
+        pausa();
+    }
+
+
+//MÉTODOS DE APOIO PARA O FUNCIONAMENTO
+
+    private static Funcionario buscarFuncionario(List<Funcionario> list, int id){
+        for (Funcionario func : list) {
+            if (func.getId() == id) {
+                return func;
+            }
+        }
+        return null;
+    }
 
     private static void limparTerminal() {
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
+        for(int i = 0; i < 50; i++){
+            System.out.println();
+        }
     }
 
     private static void pausa(){
