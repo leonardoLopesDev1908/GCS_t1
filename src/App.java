@@ -35,14 +35,14 @@ public class App {
                         new Funcionario("Paulo Omar", "Analista Contábil"),
                         new Funcionario("Lucas Guedes", "Gerente do Financeiro"),
                         new Funcionario("Vanessa da Mata", "Auditora de Vendas")
-        ));
+                ));
 
         Departamento comercial = criarDepartamento("Comercial", empresa, List.of(
                         new Funcionario("Neymar Jr.", "Vendedor"),
                         new Funcionario("Marta da Silva", "Vendedora"),
                         new Funcionario("Alan Patrick", "Gerente de Marketing"),
                         new Funcionario("Gabriela Maciel", "Estagiaria de Marketing")
-        ));
+                ));
 
         return empresa;
     }
@@ -65,7 +65,6 @@ public class App {
         boolean rodando = true;
 
         while(rodando) {
-            limparTerminal();
             System.out.println("====== TECH SOLUÇÕES ======");
 
             System.out.println("\n0. Administrador");
@@ -90,15 +89,17 @@ public class App {
 
             if (escolha == 99){
                 System.out.println("Encerrando o sistema...");
-                rodando = false;
                 break;
             } else if (buscarFuncionario(empresa.getTodosFuncionarios(), escolha) != null) {
+                limparTerminal();
                 menuFuncionario(buscarFuncionario(empresa.getTodosFuncionarios(), escolha));
-
-            } else if (escolha == 0) {
-                System.out.print("Ainda não desenvolvido...");
                 pausa();
-                //String senha = sc.nextLine();
+
+                //LOGAR COMO ADMINISTRADOR
+//            } else if (escolha == 0) {
+//                System.out.print("Ainda não desenvolvido...");
+//                pausa();
+//                //String senha = sc.nextLine();
 
             } else {
                 System.out.println("Opção inválida. Tente novamente");
@@ -113,7 +114,6 @@ public class App {
         boolean rodando = true;
 
         while (rodando) {
-            limparTerminal();
 
             System.out.println("=== " + func.getName() + " ===");
 
@@ -128,19 +128,20 @@ public class App {
             switch (escolha) {
                 case 1:
                     limparTerminal();
-                    rodando = false;
                     realizarPedido(func);
                     break;
                 case 2:
                     limparTerminal();
-                    rodando = false;
                     mostrarInformacoes(func);
                     break;
                 case 3:
-                    rodando = false;
                     limparTerminal();
+                    rodando = false;
                     break;
-
+                default:
+                    System.out.println("Opção inválida. Tente novamente.");
+                    pausa();
+                    limparTerminal();
             }
         }
     }
@@ -152,16 +153,17 @@ public class App {
         System.out.println("Cargo: " + func.getCargo());
         System.out.println("Departamento: " + func.getDepartamento().getName());
         pausa();
+        limparTerminal();
     }
 
     public static void realizarPedido(Funcionario func){
         System.out.println("Funcionalidade ainda não feita");
         pausa();
+        limparTerminal();
     }
 
 
 //MÉTODOS DE APOIO PARA O FUNCIONAMENTO
-
     private static Funcionario buscarFuncionario(List<Funcionario> list, int id){
         for (Funcionario func : list) {
             if (func.getId() == id) {
@@ -177,7 +179,7 @@ public class App {
         }
     }
 
-    private static void pausa(){
+    private static void pausa() {
         System.out.println("Pressione enter para continuar...");
         sc.nextLine();
         sc.nextLine();
