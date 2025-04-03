@@ -15,4 +15,9 @@ public class Item {
     public double getPreco() {
         return preco;
     }
+
+    @Override
+    public String toString(){
+        return String.format("- %s", this.nome);
+    }
 }

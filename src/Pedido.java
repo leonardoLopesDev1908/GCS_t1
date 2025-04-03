@@ -1,21 +1,32 @@
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
-import java.time.*;
+import java.util.stream.Collectors;
+
 
 public class Pedido {
 
+    enum Status {
+        EM_ANALISE, APROVADO, REPROVADO
+    }
+    private Status status;
+    private static int LAST_ID = 1000;
+    private int id;
     private List<Item> itens;
     private LocalDate data;
     private double valor;
+    private Departamento depto;
+    private Funcionario func;
+    private String descricao;
 
-    public Pedido(){
-        this.itens = new ArrayList<>();
-        this.data = LocalDate.now();;
+    public Pedido(Departamento depto, Funcionario func, List<Item> itens, String descricao){
+        this.itens = itens;
+        this.data = LocalDate.now();
         this.valor = getPrecoTotal();
-    }
-
-    public List<Item> getItens(){
-        return itens;
+        this.id = ++LAST_ID;
+        this.depto = depto;
+        this.func = func;
+        this.status = Status.EM_ANALISE;
+        this.descricao = descricao;
     }
 
     public LocalDate getData() {
@@ -26,6 +37,30 @@ public class Pedido {
         return valor;
     }
 
+    private void reprovarPedido(){
+        this.status = Status.REPROVADO;
+    }
+
+    private void aprovarPedido(){
+        this.status = Status.APROVADO;
+    }
+
+    @Override
+    public String toString(){
+        return String.format("ID do pedido: %d"+
+                "\nStatus: %s"+
+                "\nData: %s"+
+                "\nFuncionário solicitante: %s" +
+                "\nDepartamento solicitante: %s" +
+                "\nValor total: R$%.2f" +
+                "\nDescrição do pedido: %s" +
+                "\nLista de itens: %s",
+                this.id, this.status, this.data, this.func, this.depto.getName(),
+                this.valor, this.descricao,         this.itens.stream()
+                        .map(Item::toString)
+                        .collect(Collectors.joining("\n- ")));
+    }
+
     private double getPrecoTotal(){
         double total = 0;
         for (Item item : itens) {
@@ -33,4 +68,5 @@ public class Pedido {
         }
         return total;
     }
+
 }

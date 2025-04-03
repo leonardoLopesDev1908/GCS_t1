@@ -6,6 +6,7 @@ public class Empresa {
     private String name;
     private List<Departamento> departamentos = new ArrayList<>();
     private List<Funcionario> todosFuncionarios =new ArrayList<>();
+    private List<Pedido> todosPedidos = new ArrayList<>();
 
     public Empresa(String name) {
         this.name = name;
@@ -26,5 +27,13 @@ public class Empresa {
 
     public List<Funcionario> getTodosFuncionarios(){
         return todosFuncionarios;
+    }
+
+    public List<Pedido> getTodosPedidos(){
+        return todosPedidos;
+    }
+
+    public void adicionarPedido(Pedido pedido){
+        todosPedidos.add(pedido);
     }
 }
