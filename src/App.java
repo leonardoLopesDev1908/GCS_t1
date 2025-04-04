@@ -92,16 +92,18 @@ public class App {
             if (escolha == OPCAO_SAIDA) {
                 System.out.println("Encerrando o sistema...");
                 break;
-
-                //LOGAR COMO ADMINISTRADOR
-//            } else if (escolha == OPCAO_ADMIN) {
-//                System.out.print("Ainda não desenvolvido...");
-//                pausa();
-//                //String senha = sc.nextLine();
-
+            } else if (escolha == OPCAO_ADMIN) {
+                System.out.print("\nSenha de administrador: ");
+                String form = sc.nextLine();
+                if (Administrador.verificarSenha(form)){
+                    limparTerminal();
+                    menuAdministrador(empresa, sc);
+                } else {
+                    limparTerminal();
+                    break;
+                }
             } else {
                 Funcionario func = buscarFuncionario(empresa.getTodosFuncionarios(), escolha);
-
                 if (func != null) {
                     limparTerminal();
                     menuFuncionario(func, sc);
@@ -143,12 +145,6 @@ public class App {
                     limparTerminal();
                     rodando = false;
                     break;
-                //------TEMPORÁRIO
-                case 4:
-                    limparTerminal();
-                    listarPedidos(sc, func);
-                    break;
-                    //------
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
                     pausa(sc);
@@ -166,7 +162,6 @@ public class App {
         pausa(sc);
         limparTerminal();
     }
-
 
     public static void realizarPedido(Funcionario func, Scanner sc){
 
@@ -202,6 +197,63 @@ public class App {
         limparTerminal();
     }
 
+    private static void menuAdministrador(Empresa empresa, Scanner sc) {
+        boolean rodando = true;
+
+        while (rodando) {
+
+            System.out.println("==== ADMINISTRADOR ====");
+
+            System.out.println("\nBarra de Funcionalidades: " +
+                    "\n(1)Listar pedidos" +
+                    "\n(2)Listar pedidos por data" +
+                    "\n(3)Concluir pedidos" +
+                    "\n(4)Buscar pedidos por Funcionário" +
+                    "\n(5)Buscar pedidos por Departamento" +
+                    "\n(6)Valor total de pedidos" +
+                    "\n(7)Pedidos dos últimos 30 dias" +
+                    "\n(8)Pedido mais caro em aberto" +
+                    "\n(9)Retornar ao menu");
+
+            System.out.print("\nEscolha: ");
+
+            int escolha = sc.nextInt();
+            switch (escolha) {
+                case 1:
+                    limparTerminal();
+                    Administrador.visualizarPedidos(empresa);
+                    pausa(sc);
+                    limparTerminal();
+                    break;
+//                case 2:
+//                    Administrador.visualizarPorData(empresa);
+//                    pausa(sc);
+//                    limparTerminal();
+//                    break;
+//                    break;
+                case 3:
+                    limparTerminal();
+                    System.out.print("Informe o id do pedido: ");
+                    int id = sc.nextInt();
+                    Administrador.concluirPedidos(id, empresa, sc);
+                    limparTerminal();
+                    break;
+                case 4:
+                    limparTerminal();
+                    Administrador.buscarPorFuncionario(empresa, sc);
+                    pausa(sc);
+                    limparTerminal();
+                case 9:
+                    rodando = false;
+                    limparTerminal();
+                    break;
+                default:
+                    System.out.println("Opção inválida. Tente novamente.");
+                    pausa(sc);
+                    limparTerminal();
+            }
+        }
+    }
 
     //MÉTODOS DE APOIO PARA O FUNCIONAMENTO
     private static Funcionario buscarFuncionario(List<Funcionario> list, int id){
@@ -211,21 +263,6 @@ public class App {
             }
         }
         return null;
-    }
-
-    private static void listarPedidos(Scanner sc, Funcionario func){
-
-        List<Pedido> pedidos = func.getDepartamento().empresa.getTodosPedidos();
-
-        if (pedidos.isEmpty()){
-            System.out.println("Não há pedidos cadastrados ainda");
-        } else {
-            for (Pedido pedido : func.getDepartamento().empresa.getTodosPedidos()) {
-                System.out.println(pedido);
-            }
-        }
-        pausa(sc);
-        limparTerminal();
     }
 
     private static void limparTerminal() {

@@ -2,11 +2,10 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 public class Pedido {
 
     enum Status {
-        EM_ANALISE, APROVADO, REPROVADO
+        EM_ANALISE, APROVADO, REJEITADO
     }
     private Status status;
     private static int LAST_ID = 1000;
@@ -29,6 +28,14 @@ public class Pedido {
         this.descricao = descricao;
     }
 
+    public int getId(){
+        return id;
+    }
+
+    public Status getStatus(){
+        return status;
+    }
+
     public LocalDate getData() {
         return data;
     }
@@ -37,11 +44,15 @@ public class Pedido {
         return valor;
     }
 
-    private void reprovarPedido(){
-        this.status = Status.REPROVADO;
+    public Funcionario getFunc(){
+        return func;
     }
 
-    private void aprovarPedido(){
+    public void rejeitarPedido(){
+        this.status = Status.REJEITADO;
+    }
+
+    public void aprovarPedido(){
         this.status = Status.APROVADO;
     }
 
