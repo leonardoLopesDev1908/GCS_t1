@@ -28,6 +28,10 @@ public class Pedido {
         this.descricao = descricao;
     }
 
+    public Pedido(double valor){
+        this.valor = valor;
+    }
+
     public int getId(){
         return id;
     }
@@ -46,6 +50,10 @@ public class Pedido {
 
     public Funcionario getFunc(){
         return func;
+    }
+
+    public String getDescricao() {
+        return descricao;
     }
 
     public void rejeitarPedido(){

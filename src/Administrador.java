@@ -1,7 +1,9 @@
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 
 public class Administrador {
+
 
     private static final int passwd = 0x000C589D;
 
@@ -20,18 +22,22 @@ public class Administrador {
         }
     }
 
-//    public static void visualizarPorData(Empresa empresa, LocalDate data1, LocalDate data2) {
-//        List<Pedido> pedidos = empresa.getTodosPedidos();
-//
-//        if (pedidos.isEmpty()){
-//            System.out.println("Não há pedidos cadastrados ainda");
-//        } else {
-//            pedidos.sort()
-//            for (Pedido pedido : empresa.getTodosPedidos()) {
-//                System.out.println(pedido);
-//            }
-//        }
-//    }
+    public static void visualizarPorData(Empresa empresa, LocalDate data1, LocalDate data2, Scanner sc) {
+        List<Pedido> pedidos = empresa.getTodosPedidos();
+
+        if (pedidos.isEmpty()){
+            System.out.println("Não há pedidos cadastrados ainda");
+        } else {
+            for (Pedido pedido : pedidos) {
+                boolean maiorOuIgual = pedido.getData().isAfter(data1) || pedido.getData().isEqual(data1);
+                boolean menorOuIgual = pedido.getData().isBefore(data2) || pedido.getData().isEqual(data2);
+                if (maiorOuIgual && menorOuIgual) {
+                    System.out.println(pedido);
+                    System.out.println("-".repeat(10) + "\n");
+                }
+            }
+        }
+    }
 
     public static void concluirPedidos(int id, Empresa empresa, Scanner sc) {
         List<Pedido> pedidos = empresa.getTodosPedidos();
@@ -69,37 +75,98 @@ public class Administrador {
         }
     }
 
-    //METODOS PARA IMPLEMENTAR
     public static void buscarPorFuncionario(Empresa empresa, Scanner sc) {
-        System.out.print("\nNome do Funcionário: ");
-        String nome = sc.nextLine();
+        List<Pedido> pedidos = empresa.getTodosPedidos();
+        sc.nextLine();
+
+        System.out.print("\nNome do funcionário: ");
+        String nome = sc.nextLine().toLowerCase();
+
+        boolean encontrou = false;
+
+        for (Pedido pedido : pedidos) {
+            if(pedido.getFunc() != null && pedido.getFunc().getName() != null) {
+                String nomeFuncionario = pedido.getFunc().getName().trim().toLowerCase();
+                if(nomeFuncionario.contains(nome)) {
+                    System.out.println(pedido);
+                    System.out.println("-".repeat(10));
+                    encontrou = true;
+                }
+            }
+        }
+
+        if (!encontrou) {
+            System.out.println("Não há pedidos encontrados para " + nome);
+        }
+
+    }
+
+    public static void buscarPorDescricao(Empresa empresa, Scanner sc) {
+
+        sc.nextLine();
+        System.out.print("\nBusca: ");
+        String busca = sc.nextLine().toLowerCase().trim();
 
         List<Pedido> pedidos = empresa.getTodosPedidos();
 
+        boolean encontrou = false;
         for (Pedido pedido : pedidos) {
-            if (pedido.getFunc().getName().equalsIgnoreCase(nome)) {
+            if (pedido.getDescricao().toLowerCase().contains(busca)) {
                 System.out.println(pedido);
                 System.out.println("-".repeat(10));
+                encontrou = true;
             }
+        }
+        if(!encontrou){
+            System.out.println("Nenhum pedido encontrado com a busca '" + busca + "'");
         }
     }
 
-    public static void buscarPorDescricao() {
+    public static void valorTotalPedidos(Empresa empresa, Scanner sc){
+        List<Pedido> pedidos = empresa.getTodosPedidos();
+
+        double valorTotal = 0;
+        for(Pedido pedido : pedidos) {
+            valorTotal += pedido.getValor();
+        }
+
+        System.out.println("Valor total em pedidos: R$" + valorTotal);
 
     }
 
-    public static void valorTotalPedidos(){
+    public static void pedidosRecentes(Empresa empresa, Scanner sc){
+        List<Pedido> pedidos = empresa.getTodosPedidos();
+        LocalDate hoje = LocalDate.now();
+
+        for (Pedido pedido : pedidos){
+            if (calcularDias(hoje, pedido.getData()) <= 30){
+                System.out.println(pedido);
+            }
+        }
 
     }
 
-    public static void pedidosRecentes(){
+    public static void pedidoMaisCaro(Empresa empresa, Scanner sc){
+        List<Pedido> pedidos = empresa.getTodosPedidos();
+        Pedido pedidoMaisCaro = new Pedido(0);
 
+        boolean encontrou = false;
+        for(Pedido pedido : pedidos) {
+            if (pedido.getValor() > pedidoMaisCaro.getValor() && pedido.getStatus().equals(Pedido.Status.EM_ANALISE)){
+                pedidoMaisCaro = pedido;
+                encontrou = true;
+            }
+        }
+
+        System.out.println("Pedido mais caro em análise: \n");
+        System.out.println(pedidoMaisCaro);
+
+        if (!encontrou) {
+            System.out.println("Nenhum pedido encontrado");
+        }
     }
 
-    public static void pedidoMaisCaro(){
-
-    }
-
+    //AUTENTICAÇÃO
     public static boolean verificarSenha(String senha){
         int checkedSenha = Integer.parseInt(senha);
 
@@ -109,4 +176,14 @@ public class Administrador {
         return checkedSenha == descriptSenha;
     }
 
+    private static int calcularDias(LocalDate data1, LocalDate data2){
+
+        return (int) (data1.toEpochDay() - data2.toEpochDay());
+
+//          TESTE DO MÉTODO ABAIXO
+//        public static void main(String[] args) {
+//        LocalDate data1 = LocalDate.now();
+//        LocalDate data2 = LocalDate.of(2025, Month.APRIL, 3);
+//        System.out.println(calcularDias(data1, data2));
+    }
 }
