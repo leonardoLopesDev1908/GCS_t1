@@ -12,6 +12,10 @@ public class Funcionario {
         this.id = ++LAST_ID;
     }
 
+    public Funcionario(String name){
+        this.name = name;
+    }
+
     public void vincularDepto(Departamento depto) {
         this.departamento = depto;
     }

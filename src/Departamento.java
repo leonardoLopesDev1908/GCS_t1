@@ -11,6 +11,11 @@ public class Departamento {
         this.name = name;
     }
 
+    public Departamento(String name, Empresa empresa) {
+        this.name = name;
+        this.empresa = empresa;
+    }
+
     public List<Funcionario> getFuncionarios(){
         return funcionarios;
     }

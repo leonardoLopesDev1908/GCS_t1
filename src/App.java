@@ -1,6 +1,3 @@
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -21,6 +18,10 @@ public class App {
     private static Empresa inicializar() {
 
         Empresa empresa = new Empresa("Tech Soluções");
+
+        Departamento administrativo = new Departamento("Administrativo", empresa);
+        Administrador.depto = administrativo;
+        Administrador.empresa = empresa;
 
         Departamento recursosHumanos = criarDepartamento("Recursos Humanos", empresa,
                 List.of(
@@ -173,6 +174,12 @@ public class App {
         int numItens = sc.nextInt();
         sc.nextLine();
 
+        if (numItens <= 0) {
+            System.out.println("Número de itens inválido");
+            pausa(sc);
+            limparTerminal();
+        }
+
         List<Item> itens = new ArrayList<>();
 
         for (int i = 1; i <= numItens; i++) {
@@ -200,6 +207,40 @@ public class App {
         limparTerminal();
     }
 
+    public static void realizarPedido(Departamento depto, Scanner sc){
+
+        System.out.println("Insira abaixo as informações do seu pedido");
+        System.out.print("\nNúmero de itens do pedido: ");
+        int numItens = sc.nextInt();
+        sc.nextLine();
+
+        List<Item> itens = new ArrayList<>();
+
+        for (int i = 1; i <= numItens; i++) {
+            System.out.println(i + "º item ");
+            System.out.print("---------");
+            System.out.print("\nNome do item: ");
+            String nomeItem = sc.nextLine();
+
+            System.out.print("\nPreço do item: ");
+            double precoUnidade = sc.nextDouble();
+
+            System.out.print("\nQuantidade desse item que está sendo pedida: ");
+            int quantidade = sc.nextInt();
+            sc.nextLine();
+
+            double precoItem = quantidade * precoUnidade;
+            itens.add(new Item(nomeItem, precoItem));
+        }
+        System.out.print("\nDescrição do pedido: ");
+        String descricao = sc.nextLine();
+
+        depto.empresa.adicionarPedido( new Pedido(depto, itens, descricao));
+
+        pausa(sc);
+        limparTerminal();
+    }
+
     private static void menuAdministrador(Empresa empresa, Scanner sc) {
         boolean rodando = true;
 
@@ -216,7 +257,8 @@ public class App {
                     "\n(6)Valor total de pedidos" +
                     "\n(7)Pedidos dos últimos 30 dias" +
                     "\n(8)Pedido mais caro em aberto" +
-                    "\n(9)Retornar ao menu");
+                    "\n(9)Fazer pedido" +
+                    "\n(0)Retornar ao menu");
 
             System.out.print("\nEscolha: ");
 
@@ -229,49 +271,7 @@ public class App {
                     limparTerminal();
                     break;
                 case 2:
-                    System.out.println("Informe o intervalo de datas no format dd/mm/aaaa\n");
-
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-                    LocalDate data1 = null;
-
-                    while (data1 == null) {
-                        try {
-                            System.out.print("\nPrimeira data: ");
-                            String input1 = sc.nextLine().trim();
-                            sc.nextLine();
-
-                            if (input1.isEmpty()) {
-                                throw new DateTimeParseException("Data vazia", input1, 0);
-                            }
-                            data1 = LocalDate.parse(input1, formatter);
-                        } catch (DateTimeParseException e) {
-                            System.out.println("Data inválida! Formato correto: dd/mm/aaaa");
-                        }
-                    }
-
-                    LocalDate data2 = null;
-                    while (data2 == null) {
-                        try {
-                            System.out.print("\nSegunda data: ");
-
-                            String input2 = sc.nextLine().trim();
-                            sc.nextLine();
-                            if (input2.isEmpty()) {
-                                throw new DateTimeParseException("Data vazia", input2, 0);
-                            }
-                            data2 = LocalDate.parse(input2, formatter);
-
-                            if (data2.isBefore(data1)) {
-                                System.out.println("A segunda data deve ser posterior ou igual à primeira!");
-                                data2 = null;
-                            }
-                        } catch (DateTimeParseException e) {
-                            System.out.println("Data inválida! Formato correto: dd/mm/aaaa");
-                        }
-                    }
-
-                    Administrador.visualizarPorData(empresa, data1, data2, sc);
+                    Administrador.visualizarPorData(empresa,sc);
                     pausa(sc);
                     limparTerminal();
                     break;
@@ -308,6 +308,10 @@ public class App {
                     limparTerminal();
                     break;
                 case 9:
+                    limparTerminal();
+                    realizarPedido(Administrador.depto, sc);
+                    break;
+                case 0:
                     rodando = false;
                     limparTerminal();
                     break;

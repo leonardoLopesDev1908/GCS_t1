@@ -28,6 +28,18 @@ public class Pedido {
         this.descricao = descricao;
     }
 
+    public Pedido(Departamento depto, List<Item> itens, String descricao) {
+        this.itens = itens;
+        this.data = LocalDate.now();
+        this.valor = getPrecoTotal();
+        this.id = ++LAST_ID;
+        this.depto = depto;
+        this.func = new Funcionario("Administrador");
+        this.status = Status.EM_ANALISE;
+        this.descricao = descricao;
+    }
+
+
     public Pedido(double valor){
         this.valor = valor;
     }

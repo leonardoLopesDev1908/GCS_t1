@@ -1,10 +1,13 @@
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Scanner;
 
 public class Administrador {
 
-
+    public static Empresa empresa;
+    public static Departamento depto;
     private static final int passwd = 0x000C589D;
 
     public static void visualizarPedidos(Empresa empresa) {
@@ -22,8 +25,50 @@ public class Administrador {
         }
     }
 
-    public static void visualizarPorData(Empresa empresa, LocalDate data1, LocalDate data2, Scanner sc) {
+    public static void visualizarPorData(Empresa empresa, Scanner sc) {
         List<Pedido> pedidos = empresa.getTodosPedidos();
+
+        System.out.println("Informe o intervalo de datas no format dd/mm/aaaa\n");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        LocalDate data1 = null;
+
+        while (data1 == null) {
+            try {
+                System.out.print("\nPrimeira data: ");
+                String input1 = sc.nextLine().trim();
+                sc.nextLine();
+
+                if (input1.isEmpty()) {
+                    throw new DateTimeParseException("Data vazia", input1, 0);
+                }
+                data1 = LocalDate.parse(input1, formatter);
+            } catch (DateTimeParseException e) {
+                System.out.println("Data inválida! Formato correto: dd/mm/aaaa");
+            }
+        }
+
+        LocalDate data2 = null;
+        while (data2 == null) {
+            try {
+                System.out.print("\nSegunda data: ");
+
+                String input2 = sc.nextLine().trim();
+                sc.nextLine();
+                if (input2.isEmpty()) {
+                    throw new DateTimeParseException("Data vazia", input2, 0);
+                }
+                data2 = LocalDate.parse(input2, formatter);
+
+                if (data2.isBefore(data1)) {
+                    System.out.println("A segunda data deve ser posterior ou igual à primeira!");
+                    data2 = null;
+                }
+            } catch (DateTimeParseException e) {
+                System.out.println("Data inválida! Formato correto: dd/mm/aaaa");
+            }
+        }
 
         if (pedidos.isEmpty()){
             System.out.println("Não há pedidos cadastrados ainda");
