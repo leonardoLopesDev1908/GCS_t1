@@ -1,6 +1,7 @@
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -150,20 +151,25 @@ public class Administrador {
 
         sc.nextLine();
         System.out.print("\nBusca: ");
-        String busca = sc.nextLine().toLowerCase().trim();
+        try {
+            String busca = sc.nextLine().toLowerCase().trim();
 
-        List<Pedido> pedidos = empresa.getTodosPedidos();
+            List<Pedido> pedidos = empresa.getTodosPedidos();
 
-        boolean encontrou = false;
-        for (Pedido pedido : pedidos) {
-            if (pedido.getDescricao().toLowerCase().contains(busca)) {
-                System.out.println(pedido);
-                System.out.println("-".repeat(10));
-                encontrou = true;
+            boolean encontrou = false;
+            for (Pedido pedido : pedidos) {
+                if (pedido.getDescricao().toLowerCase().contains(busca)) {
+                    System.out.println(pedido);
+                    System.out.println("-".repeat(10));
+                    encontrou = true;
+                }
             }
-        }
-        if(!encontrou){
-            System.out.println("Nenhum pedido encontrado com a busca '" + busca + "'");
+            if (!encontrou) {
+                System.out.println("Nenhum pedido encontrado com a busca '" + busca + "'");
+            }
+        } catch (InputMismatchException e) {
+            System.out.println("Busca inválida");
+            sc.nextLine();
         }
     }
 

@@ -2,7 +2,7 @@ public class Funcionario {
 
     private static int LAST_ID = 0;
     private int id;
-    private String name;
+    private final String name;
     private String cargo;
     private Departamento departamento;
 

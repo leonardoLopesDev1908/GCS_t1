@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -88,33 +89,39 @@ public class App {
                 }
             }
 
-            System.out.print("\nFaça login com seu Id "+
+            try {
+                System.out.print("\nFaça login com seu Id " +
                         "\n(ou use '99' para encerrar o programa): ");
-            int escolha = sc.nextInt();
-            sc.nextLine();
+                int escolha = sc.nextInt();
+                sc.nextLine();
 
-            if (escolha == OPCAO_SAIDA) {
-                System.out.println("Encerrando o sistema...");
-                break;
-            } else if (escolha == OPCAO_ADMIN) {
-                System.out.print("\nSenha de administrador: ");
-                String form = sc.nextLine();
-                if (Administrador.verificarSenha(form)){
-                    limparTerminal();
-                    menuAdministrador(empresa, sc);
-                } else {
-                    limparTerminal();
+                if (escolha == OPCAO_SAIDA) {
+                    System.out.println("Encerrando o sistema...");
                     break;
-                }
-            } else {
-                Funcionario func = buscarFuncionario(empresa.getTodosFuncionarios(), escolha);
-                if (func != null) {
-                    limparTerminal();
-                    menuFuncionario(func, sc);
+                } else if (escolha == OPCAO_ADMIN) {
+                    System.out.print("\nSenha de administrador: ");
+                    String form = sc.nextLine();
+                    if (Administrador.verificarSenha(form)) {
+                        limparTerminal();
+                        menuAdministrador(empresa, sc);
+                    } else {
+                        limparTerminal();
+                        break;
+                    }
                 } else {
-                    System.out.println("❌ Funcionário não encontrado.");
-                    pausa(sc);
+                    Funcionario func = buscarFuncionario(empresa.getTodosFuncionarios(), escolha);
+                    if (func != null) {
+                        limparTerminal();
+                        menuFuncionario(func, sc);
+                    } else {
+                        System.out.println("❌ Funcionário não encontrado.");
+                        pausa(sc);
+                    }
                 }
+            } catch (InputMismatchException e){
+                System.out.println("ERRO - Digite apenas números: " + e.getMessage());
+                sc.nextLine();
+                pausa(sc);
             }
         }
 
@@ -133,26 +140,33 @@ public class App {
                     "\n(2)Minhas informações" +
                     "\n(3)Retornar ao menu principal");
 
-            System.out.print("\nEscolha: ");
+            try {
+                System.out.print("\nEscolha: ");
 
-            int escolha = sc.nextInt();
-            switch (escolha) {
-                case 1:
-                    limparTerminal();
-                    realizarPedido(func, sc);
-                    break;
-                case 2:
-                    limparTerminal();
-                    mostrarInformacoes(func, sc);
-                    break;
-                case 3:
-                    limparTerminal();
-                    rodando = false;
-                    break;
-                default:
-                    System.out.println("Opção inválida. Tente novamente.");
-                    pausa(sc);
-                    limparTerminal();
+                int escolha = sc.nextInt();
+                switch (escolha) {
+                    case 1:
+                        limparTerminal();
+                        realizarPedido(func, sc);
+                        break;
+                    case 2:
+                        limparTerminal();
+                        mostrarInformacoes(func, sc);
+                        break;
+                    case 3:
+                        limparTerminal();
+                        rodando = false;
+                        break;
+                    default:
+                        System.out.println("Opção inválida. Tente novamente.");
+                        pausa(sc);
+                        limparTerminal();
+                }
+            } catch (InputMismatchException e){
+                System.out.println("ERRO - Digite apenas número: " + e.getMessage());
+                sc.nextLine();
+                pausa(sc);
+                limparTerminal();
             }
         }
     }
@@ -182,29 +196,36 @@ public class App {
 
         List<Item> itens = new ArrayList<>();
 
-        for (int i = 1; i <= numItens; i++) {
-            System.out.println(i + "º item ");
-            System.out.print("---------");
-            System.out.print("\nNome do item: ");
-            String nomeItem = sc.nextLine();
+        try {
+            for (int i = 1; i <= numItens; i++) {
+                System.out.println(i + "º item ");
+                System.out.print("---------");
+                System.out.print("\nNome do item: ");
+                String nomeItem = sc.nextLine();
 
-            System.out.print("\nPreço do item: ");
-            double precoUnidade = sc.nextDouble();
+                System.out.print("\nPreço do item: ");
+                double precoUnidade = sc.nextDouble();
 
-            System.out.print("\nQuantidade desse item que está sendo pedida: ");
-            int quantidade = sc.nextInt();
+                System.out.print("\nQuantidade desse item que está sendo pedida: ");
+                int quantidade = sc.nextInt();
+                sc.nextLine();
+
+                double precoItem = quantidade * precoUnidade;
+                itens.add(new Item(nomeItem, precoItem));
+            }
+            System.out.print("\nDescrição do pedido: ");
+            String descricao = sc.nextLine();
+
+            func.getDepartamento().empresa.adicionarPedido(new Pedido(func.getDepartamento(), func, itens, descricao));
+
+            pausa(sc);
+            limparTerminal();
+        } catch (InputMismatchException e) {
+            System.out.println("ERRO - Entrada inválida");
             sc.nextLine();
-
-            double precoItem = quantidade * precoUnidade;
-            itens.add(new Item(nomeItem, precoItem));
+            pausa(sc);
+            limparTerminal();
         }
-        System.out.print("\nDescrição do pedido: ");
-        String descricao = sc.nextLine();
-
-        func.getDepartamento().empresa.adicionarPedido( new Pedido(func.getDepartamento(), func, itens, descricao));
-
-        pausa(sc);
-        limparTerminal();
     }
 
     public static void realizarPedido(Departamento depto, Scanner sc){
@@ -216,29 +237,36 @@ public class App {
 
         List<Item> itens = new ArrayList<>();
 
-        for (int i = 1; i <= numItens; i++) {
-            System.out.println(i + "º item ");
-            System.out.print("---------");
-            System.out.print("\nNome do item: ");
-            String nomeItem = sc.nextLine();
+        try {
+            for (int i = 1; i <= numItens; i++) {
+                System.out.println(i + "º item ");
+                System.out.print("---------");
+                System.out.print("\nNome do item: ");
+                String nomeItem = sc.nextLine();
 
-            System.out.print("\nPreço do item: ");
-            double precoUnidade = sc.nextDouble();
+                System.out.print("\nPreço do item: ");
+                double precoUnidade = sc.nextDouble();
 
-            System.out.print("\nQuantidade desse item que está sendo pedida: ");
-            int quantidade = sc.nextInt();
+                System.out.print("\nQuantidade desse item que está sendo pedida: ");
+                int quantidade = sc.nextInt();
+                sc.nextLine();
+
+                double precoItem = quantidade * precoUnidade;
+                itens.add(new Item(nomeItem, precoItem));
+            }
+            System.out.print("\nDescrição do pedido: ");
+            String descricao = sc.nextLine();
+
+            depto.empresa.adicionarPedido(new Pedido(depto, itens, descricao));
+
+            pausa(sc);
+            limparTerminal();
+        }catch (InputMismatchException e){
+            System.out.println("ERRO - Entrada inválida");
             sc.nextLine();
-
-            double precoItem = quantidade * precoUnidade;
-            itens.add(new Item(nomeItem, precoItem));
+            pausa(sc);
+            limparTerminal();
         }
-        System.out.print("\nDescrição do pedido: ");
-        String descricao = sc.nextLine();
-
-        depto.empresa.adicionarPedido( new Pedido(depto, itens, descricao));
-
-        pausa(sc);
-        limparTerminal();
     }
 
     private static void menuAdministrador(Empresa empresa, Scanner sc) {
@@ -262,63 +290,70 @@ public class App {
 
             System.out.print("\nEscolha: ");
 
-            int escolha = sc.nextInt();
-            switch (escolha) {
-                case 1:
-                    limparTerminal();
-                    Administrador.visualizarPedidos(empresa);
-                    pausa(sc);
-                    limparTerminal();
-                    break;
-                case 2:
-                    Administrador.visualizarPorData(empresa,sc);
-                    pausa(sc);
-                    limparTerminal();
-                    break;
-                case 3:
-                    limparTerminal();
-                    System.out.print("Informe o id do pedido: ");
-                    int id = sc.nextInt();
-                    Administrador.concluirPedidos(id, empresa, sc);
-                    limparTerminal();
-                    break;
-                case 4:
-                    Administrador.buscarPorFuncionario(empresa, sc);
-                    pausa(sc);
-                    limparTerminal();
-                    break;
-                case 5:
-                    Administrador.buscarPorDescricao(empresa, sc);
-                    pausa(sc);
-                    limparTerminal();
-                    break;
-                case 6:
-                    Administrador.valorTotalPedidos(empresa, sc);
-                    pausa(sc);
-                    limparTerminal();
-                    break;
-                case 7:
-                    Administrador.pedidosRecentes(empresa, sc);
-                    pausa(sc);
-                    limparTerminal();
-                    break;
-                case 8:
-                    Administrador.pedidoMaisCaro(empresa, sc);
-                    pausa(sc);
-                    limparTerminal();
-                    break;
-                case 9:
-                    limparTerminal();
-                    realizarPedido(Administrador.depto, sc);
-                    break;
-                case 0:
-                    rodando = false;
-                    limparTerminal();
-                    break;
-                default:
-                    System.out.println("Opção inválida. Tente novamente.");
-                    pausa(sc);
-                    limparTerminal();
+            try {
+                int escolha = sc.nextInt();
+                switch (escolha) {
+                    case 1:
+                        limparTerminal();
+                        Administrador.visualizarPedidos(empresa);
+                        pausa(sc);
+                        limparTerminal();
+                        break;
+                    case 2:
+                        Administrador.visualizarPorData(empresa, sc);
+                        pausa(sc);
+                        limparTerminal();
+                        break;
+                    case 3:
+                        limparTerminal();
+                        System.out.print("Informe o id do pedido: ");
+                        int id = sc.nextInt();
+                        Administrador.concluirPedidos(id, empresa, sc);
+                        limparTerminal();
+                        break;
+                    case 4:
+                        Administrador.buscarPorFuncionario(empresa, sc);
+                        pausa(sc);
+                        limparTerminal();
+                        break;
+                    case 5:
+                        Administrador.buscarPorDescricao(empresa, sc);
+                        pausa(sc);
+                        limparTerminal();
+                        break;
+                    case 6:
+                        Administrador.valorTotalPedidos(empresa, sc);
+                        pausa(sc);
+                        limparTerminal();
+                        break;
+                    case 7:
+                        Administrador.pedidosRecentes(empresa, sc);
+                        pausa(sc);
+                        limparTerminal();
+                        break;
+                    case 8:
+                        Administrador.pedidoMaisCaro(empresa, sc);
+                        pausa(sc);
+                        limparTerminal();
+                        break;
+                    case 9:
+                        limparTerminal();
+                        realizarPedido(Administrador.depto, sc);
+                        break;
+                    case 0:
+                        rodando = false;
+                        limparTerminal();
+                        break;
+                    default:
+                        System.out.println("Opção inválida. Tente novamente.");
+                        pausa(sc);
+                        limparTerminal();
+                }
+            } catch (InputMismatchException e){
+                System.out.println("Escolha inválida");
+                sc.nextLine();
+                pausa(sc);
+                limparTerminal();
             }
         }
     }
