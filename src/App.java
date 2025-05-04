@@ -1,22 +1,43 @@
+import java.net.ConnectException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
+import javax.sql.DataSource;
+import org.postgresql.ds.PGSimpleDataSource;
 
 public class App {
 
+    static DataSource ds = null;
     private static final int OPCAO_SAIDA = 99;
     private static final int OPCAO_ADMIN = 0;
 
     public static void executar() {
+        ds = inicializarBanco();
         Scanner sc = new Scanner(System.in);
-        Empresa empresa = inicializar();
+        Empresa empresa = inicializarEmpresa();
 
         menu(empresa, sc);
-
     }
 
-    private static Empresa inicializar() {
+    private static DataSource inicializarBanco(){
+        String jdbcUrl = "jdbc:postgresql://localhost:5432/gcs";
+        String userName = "leona";
+
+        var ds = new PGSimpleDataSource(); 
+        
+        ds.setPassword(System.getenv("DB_PASSWORD"));
+        ds.setURL(jdbcUrl);
+        ds.setUser("leona");
+
+        return ds;
+    }
+
+    private static Empresa inicializarEmpresa() {
 
         Empresa empresa = new Empresa("Tech Soluções");
 
@@ -216,7 +237,27 @@ public class App {
             System.out.print("\nDescrição do pedido: ");
             String descricao = sc.nextLine();
 
-            func.getDepartamento().empresa.adicionarPedido(new Pedido(func.getDepartamento(), func, itens, descricao));
+            Pedido pedido = new Pedido(func.getDepartamento(), func, itens, descricao);
+            func.getDepartamento().empresa.adicionarPedido(pedido);
+
+            String sql = "INSERT INTO pedidos (status, id, data, valor, itens, departamento, funcionario) "+
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+            try (Connection con = ConnectionFactory.getConnection()){
+                PreparedStatement st = con.prepareStatement(sql);
+                
+                st.setString(1, String.valueOf(pedido.getStatus()));
+                st.setInt(2, pedido.getId());
+                st.setDate(3, java.sql.Date.valueOf(pedido.getData()));
+                st.setDouble(4, pedido.getValor());
+                st.setString(5, pedido.getItens());
+                st.setString(6, String.valueOf(pedido.getDepartamento()));
+                st.setString(7, String.valueOf(pedido.getFunc()));
+                st.executeUpdate();
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
 
             pausa(sc);
             limparTerminal();
@@ -293,61 +334,62 @@ public class App {
             try {
                 int escolha = sc.nextInt();
                 switch (escolha) {
-                    case 1:
+                    case 1 -> {
                         limparTerminal();
                         Administrador.visualizarPedidos(empresa);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 2:
+                    }
+                    case 2 -> {
                         Administrador.visualizarPorData(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 3:
+                    }
+                    case 3 -> {
                         limparTerminal();
                         System.out.print("Informe o id do pedido: ");
                         int id = sc.nextInt();
                         Administrador.concluirPedidos(id, empresa, sc);
                         limparTerminal();
-                        break;
-                    case 4:
+                    }
+                    case 4 -> {
                         Administrador.buscarPorFuncionario(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 5:
+                    }
+                    case 5 -> {
                         Administrador.buscarPorDescricao(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 6:
+                    }
+                    case 6 -> {
                         Administrador.valorTotalPedidos(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 7:
+                    }
+                    case 7 -> {
                         Administrador.pedidosRecentes(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 8:
+                    }
+                    case 8 -> {
                         Administrador.pedidoMaisCaro(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 9:
+                    }
+                    case 9 -> {
                         limparTerminal();
                         realizarPedido(Administrador.depto, sc);
-                        break;
-                    case 0:
+                    }
+                    case 0 -> {
                         rodando = false;
                         limparTerminal();
-                        break;
-                    default:
+                    }
+                    default -> {
                         System.out.println("Opção inválida. Tente novamente.");
                         pausa(sc);
                         limparTerminal();
+                    }
                 }
             } catch (InputMismatchException e){
                 System.out.println("Escolha inválida");

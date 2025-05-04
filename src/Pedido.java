@@ -60,6 +60,14 @@ public class Pedido {
         return valor;
     }
 
+    public Departamento getDepartamento(){
+        return depto;
+    }
+
+    public String getItens(){
+        return String.valueOf(itens);
+    }
+
     public Funcionario getFunc(){
         return func;
     }
