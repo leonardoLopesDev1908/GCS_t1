@@ -86,14 +86,15 @@ public class Pedido {
 
     @Override
     public String toString(){
-        return String.format("ID do pedido: %d"+
-                "\nStatus: %s"+
-                "\nData: %s"+
-                "\nFuncionário solicitante: %s" +
-                "\nDepartamento solicitante: %s" +
-                "\nValor total: R$%.2f" +
-                "\nDescrição do pedido: %s" +
-                "\nLista de itens: %s",
+        return String.format("""
+                             ID do pedido: %d
+                             Status: %s
+                             Data: %s
+                             Funcion\u00e1rio solicitante: %s
+                             Departamento solicitante: %s
+                             Valor total: R$%.2f
+                             Descri\u00e7\u00e3o do pedido: %s
+                             Lista de itens: %s""",
                 this.id, this.status, this.data, this.func, this.depto.getName(),
                 this.valor, this.descricao,         this.itens.stream()
                         .map(Item::toString)

@@ -1,9 +1,7 @@
-import java.net.ConnectException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -32,7 +30,7 @@ public class App {
         
         ds.setPassword(System.getenv("DB_PASSWORD"));
         ds.setURL(jdbcUrl);
-        ds.setUser("leona");
+        ds.setUser(userName);
 
         return ds;
     }
@@ -45,14 +43,14 @@ public class App {
         Administrador.depto = administrativo;
         Administrador.empresa = empresa;
 
-        Departamento recursosHumanos = criarDepartamento("Recursos Humanos", empresa,
+        criarDepartamento("Recursos Humanos", empresa,
                 List.of(
                         new Funcionario("Julio Gomes", "Analista de contratações"),
                         new Funcionario("Marcia Lopes", "Gerente"),
                         new Funcionario("Paulo César", "Estagiário")
                 ));
 
-        Departamento informatica = criarDepartamento("Informática", empresa,
+        criarDepartamento("Informática", empresa,
                 List.of(
                         new Funcionario("Mauro Yamaguchi", "Técnico em informática"),
                         new Funcionario("Leonardo Lopes", "Gerente de TI"),
@@ -60,14 +58,14 @@ public class App {
                         new Funcionario("Julia Espindonla", "Engenheira de Software")
                 ));
 
-        Departamento financeiro = criarDepartamento("Financeiro", empresa, List.of(
+        criarDepartamento("Financeiro", empresa, List.of(
                         new Funcionario("Patricia Camargo", "Analista Contábil"),
                         new Funcionario("Paulo Omar", "Analista Contábil"),
                         new Funcionario("Lucas Guedes", "Gerente do Financeiro"),
                         new Funcionario("Vanessa da Mata", "Auditora de Vendas")
                 ));
 
-        Departamento comercial = criarDepartamento("Comercial", empresa, List.of(
+        criarDepartamento("Comercial", empresa, List.of(
                         new Funcionario("Neymar Jr.", "Vendedor"),
                         new Funcionario("Marta da Silva", "Vendedora"),
                         new Funcionario("Alan Patrick", "Gerente de Marketing"),
@@ -111,8 +109,9 @@ public class App {
             }
 
             try {
-                System.out.print("\nFaça login com seu Id " +
-                        "\n(ou use '99' para encerrar o programa): ");
+                System.out.print("""
+                                 Faça login com seu Id 
+                                 (ou use '99' para encerrar o programa): """);
                 int escolha = sc.nextInt();
                 sc.nextLine();
 
@@ -156,32 +155,34 @@ public class App {
 
             System.out.println("=== " + func.getName() + " ===");
 
-            System.out.println("\nBarra de Funcionalidades: " +
-                    "\n(1)Realizar novo pedido" +
-                    "\n(2)Minhas informações" +
-                    "\n(3)Retornar ao menu principal");
+            System.out.println("""
+                               Barra de Funcionalidades: 
+                               (1)Realizar novo pedido
+                               (2)Minhas informa\u00e7\u00f5es
+                               (3)Retornar ao menu principal""");
 
             try {
                 System.out.print("\nEscolha: ");
 
                 int escolha = sc.nextInt();
                 switch (escolha) {
-                    case 1:
+                    case 1 -> {
                         limparTerminal();
                         realizarPedido(func, sc);
-                        break;
-                    case 2:
+                    }
+                    case 2 -> {
                         limparTerminal();
                         mostrarInformacoes(func, sc);
-                        break;
-                    case 3:
+                    }
+                    case 3 -> {
                         limparTerminal();
                         rodando = false;
-                        break;
-                    default:
+                    }
+                    default -> {
                         System.out.println("Opção inválida. Tente novamente.");
                         pausa(sc);
                         limparTerminal();
+                    }
                 }
             } catch (InputMismatchException e){
                 System.out.println("ERRO - Digite apenas número: " + e.getMessage());
@@ -317,17 +318,18 @@ public class App {
 
             System.out.println("==== ADMINISTRADOR ====");
 
-            System.out.println("\nBarra de Funcionalidades: " +
-                    "\n(1)Listar pedidos" +
-                    "\n(2)Listar pedidos por data" +
-                    "\n(3)Concluir pedidos" +
-                    "\n(4)Buscar pedidos por Funcionário" +
-                    "\n(5)Buscar pedidos por descrição" +
-                    "\n(6)Valor total de pedidos" +
-                    "\n(7)Pedidos dos últimos 30 dias" +
-                    "\n(8)Pedido mais caro em aberto" +
-                    "\n(9)Fazer pedido" +
-                    "\n(0)Retornar ao menu");
+            System.out.println("""
+                                Barra de Funcionalidades: 
+                               (1)Listar pedidos
+                               (2)Listar pedidos por data
+                               (3)Concluir pedidos
+                               (4)Buscar pedidos por Funcion\u00e1rio
+                               (5)Buscar pedidos por descri\u00e7\u00e3o
+                               (6)Valor total de pedidos
+                               (7)Pedidos dos \u00faltimos 30 dias
+                               (8)Pedido mais caro em aberto
+                               (9)Fazer pedido
+                               (0)Retornar ao menu""");
 
             System.out.print("\nEscolha: ");
 
