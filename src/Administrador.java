@@ -1,9 +1,11 @@
+import java.sql.*;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
+
 
 public class Administrador {
 
@@ -12,29 +14,29 @@ public class Administrador {
     private static final int passwd = 0x000C589D;
 
     public static void visualizarPedidos(Empresa empresa) {
-        List<Pedido> pedidos = empresa.getTodosPedidos();
 
-        if (pedidos.isEmpty()){
-            System.out.println("Não há pedidos cadastrados ainda");
-        } else {
-            for (Pedido pedido : empresa.getTodosPedidos()) {
-                if (pedido.getStatus() == Pedido.Status.EM_ANALISE) {
-                    System.out.println(pedido);
-                    System.out.println("-".repeat(10));
-                }
+        String sql = "SELECT * FROM pedidos WHERE status = 'EM_ANALISE'";
+        try (Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            ResultSet rs = st.executeQuery();
+            int i = 1;
+
+            while(rs.next()){
+                imprimirPedido(rs, i);
+                i++;
             }
+
+
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
         }
     }
 
-    public static void visualizarPorData(Empresa empresa, Scanner sc) {
-        List<Pedido> pedidos = empresa.getTodosPedidos();
-
-        System.out.println("Informe o intervalo de datas no format dd/mm/aaaa\n");
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
+    public static void visualizarPorData(Empresa empresa, Scanner sc){
+        String sql = "SELECT * FROM pedidos WHERE data BETWEEN ? AND ?";
+        System.out.println("Informe a data no formato aaaa-mm-dd");
+        
         LocalDate data1 = null;
-
         while (data1 == null) {
             try {
                 System.out.print("\nPrimeira data: ");
@@ -44,109 +46,131 @@ public class Administrador {
                 if (input1.isEmpty()) {
                     throw new DateTimeParseException("Data vazia", input1, 0);
                 }
-                data1 = LocalDate.parse(input1, formatter);
+                data1 = LocalDate.parse(input1);
             } catch (DateTimeParseException e) {
-                System.out.println("Data inválida! Formato correto: dd/mm/aaaa");
+                System.out.println("Data inválida! Formato correto: aaaa-mm-dd");
             }
         }
+        java.sql.Date date1 = java.sql.Date.valueOf(data1);
+
 
         LocalDate data2 = null;
         while (data2 == null) {
             try {
                 System.out.print("\nSegunda data: ");
-
                 String input2 = sc.nextLine().trim();
                 sc.nextLine();
+
                 if (input2.isEmpty()) {
                     throw new DateTimeParseException("Data vazia", input2, 0);
                 }
-                data2 = LocalDate.parse(input2, formatter);
-
-                if (data2.isBefore(data1)) {
-                    System.out.println("A segunda data deve ser posterior ou igual à primeira!");
-                    data2 = null;
-                }
+                data2 = LocalDate.parse(input2);
             } catch (DateTimeParseException e) {
-                System.out.println("Data inválida! Formato correto: dd/mm/aaaa");
+                System.out.println("Data inválida! Formato correto: aaaa-mm-dd");
             }
+        }
+        java.sql.Date date2 = java.sql.Date.valueOf(data2);
+
+
+        try (Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            st.setDate(1, date1);
+            st.setDate(2, date2);
+            
+            ResultSet rs = st.executeQuery();
+            int i = 1;
+            while (rs.next()){
+                imprimirPedido(rs, i);
+                i++;
+            }
+
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
         }
 
-        if (pedidos.isEmpty()){
-            System.out.println("Não há pedidos cadastrados ainda");
-        } else {
-            for (Pedido pedido : pedidos) {
-                boolean maiorOuIgual = pedido.getData().isAfter(data1) || pedido.getData().isEqual(data1);
-                boolean menorOuIgual = pedido.getData().isBefore(data2) || pedido.getData().isEqual(data2);
-                if (maiorOuIgual && menorOuIgual) {
-                    System.out.println(pedido);
-                    System.out.println("-".repeat(10) + "\n");
-                }
-            }
-        }
     }
-
+    
     public static void concluirPedidos(int id, Empresa empresa, Scanner sc) {
-        List<Pedido> pedidos = empresa.getTodosPedidos();
+        if(!buscarPedido(id)){
+            System.out.println("Não há pedidos com esse id!");
+            return;
+        } 
+        String novoStatus = null;
+        boolean statusAlterado = false;
 
-        for (Pedido pedido : pedidos) {
-            if (pedido.getId() == id && pedido.getStatus() == Pedido.Status.EM_ANALISE) {
-                System.out.print("Concluir o pedido: +" +
-                        "\nDigite 1 para APROVAR o pedido" +
-                        "\nDigite 2 para REJEITAR o pedido" +
-                        "\nAção: ");
-                int escolha = sc.nextInt();
+        System.out.print("""
+                        Concluir o pedido: +
+                        Digite 1 para APROVAR o pedido
+                        Digite 2 para REJEITAR o pedido
+                        Ação: """);
+        int escolha = sc.nextInt();
 
-                if (escolha == 1) {
-                    System.out.print("\nConfirme a APROVAÇÃO do pedido digitando 1: ");
-                    int confirmacao = sc.nextInt();
-                    if (confirmacao == 1) {
-                        pedido.aprovarPedido();
-                        break;
-                    } else {
-                        System.out.println("Ações não convergem!");
-                        break;
-                    }
-                } else if (escolha == 2) {
-                    System.out.print("\nConfirme a REJEIÇÃO do pedido: ");
-                    int confirmacao = sc.nextInt();
-                    if (confirmacao == 2) {
-                        pedido.rejeitarPedido();
-                        break;
-                    } else {
-                        System.out.println("Ações não convergem!");
-                        break;
-                    }
-                }
+        if (escolha == 1) {
+            System.out.print("\nConfirme a APROVAÇÃO do pedido digitando 1: ");
+            int confirmacao = sc.nextInt();
+            if (confirmacao == 1) {
+                novoStatus = "APROVADO";
+                statusAlterado = true;
+            } else {
+                System.out.println("Ações não convergem!");
+            }
+        } else if (escolha == 2) {
+            System.out.print("\nConfirme a REJEIÇÃO do pedido: ");
+            int confirmacao = sc.nextInt();
+            if (confirmacao == 2) {
+                novoStatus = "REJEITADO";
+                statusAlterado = true;
+            } else {
+                System.out.println("Ações não convergem!");
+            }
+        }
+
+        if (statusAlterado && novoStatus != null) {
+        String sql = "UPDATE pedidos SET status = ? WHERE id = ?";
+
+            try (Connection con = ConnectionFactory.getConnection()) {  
+                PreparedStatement st = con.prepareStatement(sql);
+
+                st.setString(1, novoStatus);
+                st.setInt(2, id);
+                st.executeUpdate();
+
+            } catch (SQLException e){
+                System.out.println(e.getMessage());
             }
         }
     }
 
     public static void buscarPorFuncionario(Empresa empresa, Scanner sc) {
-        List<Pedido> pedidos = empresa.getTodosPedidos();
-        sc.nextLine();
 
         System.out.print("\nNome do funcionário: ");
-        String nome = sc.nextLine().toLowerCase();
-
+        sc.nextLine();
+        String nome = sc.nextLine();
+        String sql = "SELECT * FROM pedidos WHERE funcionario LIKE ?";
         boolean encontrou = false;
 
-        for (Pedido pedido : pedidos) {
-            if(pedido.getFunc() != null && pedido.getFunc().getName() != null) {
-                String nomeFuncionario = pedido.getFunc().getName().trim().toLowerCase();
-                if(nomeFuncionario.contains(nome)) {
-                    System.out.println(pedido);
-                    System.out.println("-".repeat(10));
-                    encontrou = true;
-                }
+        try (Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            st.setString(1, "%"+ nome + "%");
+            
+            ResultSet rs = st.executeQuery();
+
+            int i = 1;
+
+ 
+            while (rs.next()){
+                imprimirPedido(rs, i);
+                i++;
             }
-        }
-
-        if (!encontrou) {
-            System.out.println("Não há pedidos encontrados para " + nome);
-        }
-
+            encontrou = true;
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+        }   
+        if (!encontrou){
+            System.out.println("Não há pedidos encontrados para "+ nome);
+        }    
     }
-
+    
     public static void buscarPorDescricao(Empresa empresa, Scanner sc) {
 
         sc.nextLine();
@@ -174,47 +198,76 @@ public class Administrador {
     }
 
     public static void valorTotalPedidos(Empresa empresa, Scanner sc){
-        List<Pedido> pedidos = empresa.getTodosPedidos();
+        String sql = "SELECT SUM(valor) AS Total_pedidos FROM pedidos";
 
-        double valorTotal = 0;
-        for(Pedido pedido : pedidos) {
-            valorTotal += pedido.getValor();
+        try (Connection con = ConnectionFactory.getConnection()) {
+            PreparedStatement st = con.prepareStatement(sql);   
+            ResultSet rs = st.executeQuery();
+
+            while(rs.next()){
+                double totalPedidos = rs.getDouble("Total_pedidos");
+                
+                System.out.printf("""
+                    Total: $%.2f
+                    """, totalPedidos);
+            }
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
         }
-
-        System.out.println("Valor total em pedidos: R$" + valorTotal);
 
     }
 
     public static void pedidosRecentes(Empresa empresa, Scanner sc){
-        List<Pedido> pedidos = empresa.getTodosPedidos();
-        LocalDate hoje = LocalDate.now();
+        String sql = "SELECT * FROM pedidos WHERE data BETWEEN ? AND ?";
 
-        for (Pedido pedido : pedidos){
-            if (calcularDias(hoje, pedido.getData()) <= 30){
-                System.out.println(pedido);
+        try(Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            
+            LocalDate data1 = LocalDate.now().minusDays(30);
+            LocalDate data2 = LocalDate.now();
+
+            st.setDate(1, java.sql.Date.valueOf(data1));
+            st.setDate(2, java.sql.Date.valueOf(data2));
+            ResultSet rs = st.executeQuery();
+
+            int i = 1;
+            while(rs.next()){
+                imprimirPedido(rs, i);
+                i++;
             }
+            if(i == 1){
+                System.out.println("Nenhum pedido nos últimos 30 dias");
+            }
+
+        } catch (SQLException e){
+            System.out.println("Erro: " + e.getMessage());
         }
 
     }
 
     public static void pedidoMaisCaro(Empresa empresa, Scanner sc){
-        List<Pedido> pedidos = empresa.getTodosPedidos();
-        Pedido pedidoMaisCaro = new Pedido(0);
-
+        String sql = "SELECT * FROM pedidos ORDER BY valor DESC";
         boolean encontrou = false;
-        for(Pedido pedido : pedidos) {
-            if (pedido.getValor() > pedidoMaisCaro.getValor() && pedido.getStatus().equals(Pedido.Status.EM_ANALISE)){
-                pedidoMaisCaro = pedido;
+
+        try (Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            ResultSet rs = st.executeQuery();
+        
+            int i = 1;
+            while(rs.next()){
+                imprimirPedido(rs, i);
                 encontrou = true;
+                i++;
             }
+
+            if (!encontrou) {
+                System.out.println("Nenhum pedido encontrado");
+            }
+
+        } catch (SQLException e){
+            System.out.println("Erro: " + e.getMessage());
         }
 
-        System.out.println("Pedido mais caro em análise: \n");
-        System.out.println(pedidoMaisCaro);
-
-        if (!encontrou) {
-            System.out.println("Nenhum pedido encontrado");
-        }
     }
 
     //AUTENTICAÇÃO
@@ -228,13 +281,46 @@ public class Administrador {
     }
 
     private static int calcularDias(LocalDate data1, LocalDate data2){
-
         return (int) (data1.toEpochDay() - data2.toEpochDay());
-
-//          TESTE DO MÉTODO ABAIXO
-//        public static void main(String[] args) {
-//        LocalDate data1 = LocalDate.now();
-//        LocalDate data2 = LocalDate.of(2025, Month.APRIL, 3);
-//        System.out.println(calcularDias(data1, data2));
     }
+ 
+    private static boolean buscarPedido(int id) {
+        String sql = "SELECT id FROM pedidos WHERE id = ?";
+
+        try (Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            st.setInt(1, id);
+            
+            ResultSet rs = st.executeQuery();
+
+            return rs.next();
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+            return false;
+        }
+    }
+
+    private static void imprimirPedido(ResultSet rs, int i) throws SQLException{
+        String status = rs.getString("status");
+        int id = rs.getInt("id");
+        Date data = rs.getDate("data");
+        double valor = rs.getDouble("valor");
+        String itens = rs.getString("itens");
+        String departamento = rs.getString("departamento");
+        String func = rs.getString("funcionario");
+
+        System.out.printf("""
+                %dº PEDIDO
+                Status : %s;
+                Id: %d;
+                Data: %s;
+                Valor: $%.2f;
+                Itens: %s;
+                Departamento: %s;
+                Funcionário: %s.
+                """, i, status, id, data, valor, itens,
+                    departamento, func);
+        System.out.println("-=".repeat(15));
+    }
+    
 }

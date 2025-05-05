@@ -1,5 +1,6 @@
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class Pedido {
@@ -7,8 +8,8 @@ public class Pedido {
     enum Status {
         EM_ANALISE, APROVADO, REJEITADO
     }
+    Random rand = new Random();
     private Status status;
-    private static int LAST_ID = 1000;
     private int id;
     private List<Item> itens;
     private LocalDate data;
@@ -21,7 +22,7 @@ public class Pedido {
         this.itens = itens;
         this.data = LocalDate.now();
         this.valor = getPrecoTotal();
-        this.id = ++LAST_ID;
+        this.id = rand.nextInt(100000);
         this.depto = depto;
         this.func = func;
         this.status = Status.EM_ANALISE;
@@ -32,7 +33,7 @@ public class Pedido {
         this.itens = itens;
         this.data = LocalDate.now();
         this.valor = getPrecoTotal();
-        this.id = ++LAST_ID;
+        this.id = rand.nextInt(100000);
         this.depto = depto;
         this.func = new Funcionario("Administrador");
         this.status = Status.EM_ANALISE;
@@ -60,6 +61,14 @@ public class Pedido {
         return valor;
     }
 
+    public Departamento getDepartamento(){
+        return depto;
+    }
+
+    public String getItens(){
+        return String.valueOf(itens);
+    }
+
     public Funcionario getFunc(){
         return func;
     }
@@ -78,14 +87,15 @@ public class Pedido {
 
     @Override
     public String toString(){
-        return String.format("ID do pedido: %d"+
-                "\nStatus: %s"+
-                "\nData: %s"+
-                "\nFuncionário solicitante: %s" +
-                "\nDepartamento solicitante: %s" +
-                "\nValor total: R$%.2f" +
-                "\nDescrição do pedido: %s" +
-                "\nLista de itens: %s",
+        return String.format("""
+                             ID do pedido: %d
+                             Status: %s
+                             Data: %s
+                             Funcion\u00e1rio solicitante: %s
+                             Departamento solicitante: %s
+                             Valor total: R$%.2f
+                             Descri\u00e7\u00e3o do pedido: %s
+                             Lista de itens: %s""",
                 this.id, this.status, this.data, this.func, this.depto.getName(),
                 this.valor, this.descricao,         this.itens.stream()
                         .map(Item::toString)

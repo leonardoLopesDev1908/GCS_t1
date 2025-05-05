@@ -1,22 +1,41 @@
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
+import javax.sql.DataSource;
+import org.postgresql.ds.PGSimpleDataSource;
 
 public class App {
 
+    static DataSource ds = null;
     private static final int OPCAO_SAIDA = 99;
     private static final int OPCAO_ADMIN = 0;
 
     public static void executar() {
+        ds = inicializarBanco();
         Scanner sc = new Scanner(System.in);
-        Empresa empresa = inicializar();
+        Empresa empresa = inicializarEmpresa();
 
         menu(empresa, sc);
-
     }
 
-    private static Empresa inicializar() {
+    private static DataSource inicializarBanco(){
+        String jdbcUrl = "jdbc:postgresql://localhost:5432/gcs";
+        String userName = "leona";
+
+        var dataSource = new PGSimpleDataSource(); 
+        
+        dataSource.setPassword(System.getenv("DB_PASSWORD"));
+        dataSource.setURL(jdbcUrl);
+        dataSource.setUser(userName);
+
+        return ds;
+    }
+
+    private static Empresa inicializarEmpresa() {
 
         Empresa empresa = new Empresa("Tech Soluções");
 
@@ -24,14 +43,14 @@ public class App {
         Administrador.depto = administrativo;
         Administrador.empresa = empresa;
 
-        Departamento recursosHumanos = criarDepartamento("Recursos Humanos", empresa,
+        criarDepartamento("Recursos Humanos", empresa,
                 List.of(
                         new Funcionario("Julio Gomes", "Analista de contratações"),
                         new Funcionario("Marcia Lopes", "Gerente"),
                         new Funcionario("Paulo César", "Estagiário")
                 ));
 
-        Departamento informatica = criarDepartamento("Informática", empresa,
+        criarDepartamento("Informática", empresa,
                 List.of(
                         new Funcionario("Mauro Yamaguchi", "Técnico em informática"),
                         new Funcionario("Leonardo Lopes", "Gerente de TI"),
@@ -39,14 +58,14 @@ public class App {
                         new Funcionario("Julia Espindonla", "Engenheira de Software")
                 ));
 
-        Departamento financeiro = criarDepartamento("Financeiro", empresa, List.of(
+        criarDepartamento("Financeiro", empresa, List.of(
                         new Funcionario("Patricia Camargo", "Analista Contábil"),
                         new Funcionario("Paulo Omar", "Analista Contábil"),
                         new Funcionario("Lucas Guedes", "Gerente do Financeiro"),
                         new Funcionario("Vanessa da Mata", "Auditora de Vendas")
                 ));
 
-        Departamento comercial = criarDepartamento("Comercial", empresa, List.of(
+        criarDepartamento("Comercial", empresa, List.of(
                         new Funcionario("Neymar Jr.", "Vendedor"),
                         new Funcionario("Marta da Silva", "Vendedora"),
                         new Funcionario("Alan Patrick", "Gerente de Marketing"),
@@ -71,16 +90,15 @@ public class App {
 
     private static void menu(Empresa empresa, Scanner sc) {
 
-        while(true) {
+        OUTER:
+        while (true) {
             System.out.println("====== TECH SOLUÇÕES ======");
-
             System.out.println("\n0. Administrador");
-
             for (Departamento depto : empresa.getDepartamentos()) {
                 System.out.println("\nDepartamento: " + depto.getName());
                 System.out.println("-".repeat(45));
-
-
+                
+                
                 for (Funcionario func : depto.getFuncionarios()) {
                     System.out.printf("%2d. %-15s %s%n",
                             func.getId(),
@@ -88,37 +106,41 @@ public class App {
                             "(" + func.getCargo() + ")");
                 }
             }
-
             try {
-                System.out.print("\nFaça login com seu Id " +
-                        "\n(ou use '99' para encerrar o programa): ");
+                System.out.print("""
+                                                 Faça login com seu Id
+                                                 (ou use '99' para encerrar o programa): """);
                 int escolha = sc.nextInt();
                 sc.nextLine();
-
-                if (escolha == OPCAO_SAIDA) {
-                    System.out.println("Encerrando o sistema...");
-                    break;
-                } else if (escolha == OPCAO_ADMIN) {
-                    System.out.print("\nSenha de administrador: ");
-                    String form = sc.nextLine();
-                    if (Administrador.verificarSenha(form)) {
-                        limparTerminal();
-                        menuAdministrador(empresa, sc);
-                    } else {
-                        limparTerminal();
-                        break;
+                
+                switch (escolha) {
+                    case OPCAO_SAIDA -> {
+                        System.out.println("Encerrando o sistema...");
+                        break OUTER;
                     }
-                } else {
-                    Funcionario func = buscarFuncionario(empresa.getTodosFuncionarios(), escolha);
-                    if (func != null) {
-                        limparTerminal();
-                        menuFuncionario(func, sc);
-                    } else {
-                        System.out.println("❌ Funcionário não encontrado.");
-                        pausa(sc);
+                    case OPCAO_ADMIN -> {
+                        System.out.print("\nSenha de administrador: ");
+                        String form = sc.nextLine();
+                        if (Administrador.verificarSenha(form)) {
+                            limparTerminal();
+                            menuAdministrador(empresa, sc);
+                        } else {
+                            limparTerminal();
+                            break OUTER;
+                        }
+                    }
+                    default -> {
+                        Funcionario func = buscarFuncionario(empresa.getTodosFuncionarios(), escolha);
+                        if (func != null) {
+                            limparTerminal();
+                            menuFuncionario(func, sc);
+                        } else {
+                            System.out.println("❌ Funcionário não encontrado.");
+                            pausa(sc);
+                        }
                     }
                 }
-            } catch (InputMismatchException e){
+            }catch (InputMismatchException e){
                 System.out.println("ERRO - Digite apenas números: " + e.getMessage());
                 sc.nextLine();
                 pausa(sc);
@@ -135,32 +157,34 @@ public class App {
 
             System.out.println("=== " + func.getName() + " ===");
 
-            System.out.println("\nBarra de Funcionalidades: " +
-                    "\n(1)Realizar novo pedido" +
-                    "\n(2)Minhas informações" +
-                    "\n(3)Retornar ao menu principal");
+            System.out.println("""
+                               Barra de Funcionalidades: 
+                               (1)Realizar novo pedido
+                               (2)Minhas informa\u00e7\u00f5es
+                               (3)Retornar ao menu principal""");
 
             try {
                 System.out.print("\nEscolha: ");
 
                 int escolha = sc.nextInt();
                 switch (escolha) {
-                    case 1:
+                    case 1 -> {
                         limparTerminal();
                         realizarPedido(func, sc);
-                        break;
-                    case 2:
+                    }
+                    case 2 -> {
                         limparTerminal();
                         mostrarInformacoes(func, sc);
-                        break;
-                    case 3:
+                    }
+                    case 3 -> {
                         limparTerminal();
                         rodando = false;
-                        break;
-                    default:
+                    }
+                    default -> {
                         System.out.println("Opção inválida. Tente novamente.");
                         pausa(sc);
                         limparTerminal();
+                    }
                 }
             } catch (InputMismatchException e){
                 System.out.println("ERRO - Digite apenas número: " + e.getMessage());
@@ -216,7 +240,27 @@ public class App {
             System.out.print("\nDescrição do pedido: ");
             String descricao = sc.nextLine();
 
-            func.getDepartamento().empresa.adicionarPedido(new Pedido(func.getDepartamento(), func, itens, descricao));
+            Pedido pedido = new Pedido(func.getDepartamento(), func, itens, descricao);
+            func.getDepartamento().empresa.adicionarPedido(pedido);
+
+            String sql = "INSERT INTO pedidos (status, id, data, valor, itens, departamento, funcionario) "+
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+            try (Connection con = ConnectionFactory.getConnection()){
+                PreparedStatement st = con.prepareStatement(sql);
+                
+                st.setString(1, String.valueOf(pedido.getStatus()));
+                st.setInt(2, pedido.getId());
+                st.setDate(3, java.sql.Date.valueOf(pedido.getData()));
+                st.setDouble(4, pedido.getValor());
+                st.setString(5, pedido.getItens());
+                st.setString(6, String.valueOf(pedido.getDepartamento()));
+                st.setString(7, String.valueOf(pedido.getFunc()));
+                st.executeUpdate();
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
 
             pausa(sc);
             limparTerminal();
@@ -256,8 +300,29 @@ public class App {
             }
             System.out.print("\nDescrição do pedido: ");
             String descricao = sc.nextLine();
+            
+            Pedido pedido = new Pedido(depto, itens, descricao);
 
-            depto.empresa.adicionarPedido(new Pedido(depto, itens, descricao));
+            depto.empresa.adicionarPedido(pedido);
+
+              String sql = "INSERT INTO pedidos (status, id, data, valor, itens, departamento, funcionario) "+
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+            try (Connection con = ConnectionFactory.getConnection()){
+                PreparedStatement st = con.prepareStatement(sql);
+                
+                st.setString(1, String.valueOf(pedido.getStatus()));
+                st.setInt(2, pedido.getId());
+                st.setDate(3, java.sql.Date.valueOf(pedido.getData()));
+                st.setDouble(4, pedido.getValor());
+                st.setString(5, pedido.getItens());
+                st.setString(6, String.valueOf(pedido.getDepartamento()));
+                st.setString(7, String.valueOf(pedido.getFunc()));
+                st.executeUpdate();
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
 
             pausa(sc);
             limparTerminal();
@@ -276,78 +341,80 @@ public class App {
 
             System.out.println("==== ADMINISTRADOR ====");
 
-            System.out.println("\nBarra de Funcionalidades: " +
-                    "\n(1)Listar pedidos" +
-                    "\n(2)Listar pedidos por data" +
-                    "\n(3)Concluir pedidos" +
-                    "\n(4)Buscar pedidos por Funcionário" +
-                    "\n(5)Buscar pedidos por descrição" +
-                    "\n(6)Valor total de pedidos" +
-                    "\n(7)Pedidos dos últimos 30 dias" +
-                    "\n(8)Pedido mais caro em aberto" +
-                    "\n(9)Fazer pedido" +
-                    "\n(0)Retornar ao menu");
+            System.out.println("""
+                                Barra de Funcionalidades: 
+                               (1)Listar pedidos
+                               (2)Listar pedidos por data
+                               (3)Concluir pedidos
+                               (4)Buscar pedidos por Funcion\u00e1rio
+                               (5)Buscar pedidos por descri\u00e7\u00e3o
+                               (6)Valor total de pedidos
+                               (7)Pedidos dos últimos 30 dias
+                               (8)Pedido mais caro em aberto
+                               (9)Fazer pedido
+                               (0)Retornar ao menu""");
 
             System.out.print("\nEscolha: ");
 
             try {
                 int escolha = sc.nextInt();
                 switch (escolha) {
-                    case 1:
+                    case 1 -> {
                         limparTerminal();
                         Administrador.visualizarPedidos(empresa);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 2:
+                    }
+                    case 2 -> {
                         Administrador.visualizarPorData(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 3:
+                    }
+                    case 3 -> {
                         limparTerminal();
                         System.out.print("Informe o id do pedido: ");
                         int id = sc.nextInt();
                         Administrador.concluirPedidos(id, empresa, sc);
                         limparTerminal();
-                        break;
-                    case 4:
+                    }
+                    case 4 -> {
                         Administrador.buscarPorFuncionario(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 5:
+                    }
+                    case 5 -> {
                         Administrador.buscarPorDescricao(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 6:
+                    }
+                    case 6 -> {
                         Administrador.valorTotalPedidos(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 7:
+                    }
+                    case 7 -> {
                         Administrador.pedidosRecentes(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 8:
+                    }
+                    case 8 -> {
                         Administrador.pedidoMaisCaro(empresa, sc);
                         pausa(sc);
                         limparTerminal();
-                        break;
-                    case 9:
+                    }
+                    case 9 -> {
                         limparTerminal();
                         realizarPedido(Administrador.depto, sc);
-                        break;
-                    case 0:
+                    }
+                    case 0 -> {
                         rodando = false;
                         limparTerminal();
-                        break;
-                    default:
+                    }
+                    default -> {
                         System.out.println("Opção inválida. Tente novamente.");
                         pausa(sc);
                         limparTerminal();
+                    }
                 }
             } catch (InputMismatchException e){
                 System.out.println("Escolha inválida");
