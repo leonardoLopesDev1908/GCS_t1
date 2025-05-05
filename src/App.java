@@ -26,11 +26,11 @@ public class App {
         String jdbcUrl = "jdbc:postgresql://localhost:5432/gcs";
         String userName = "leona";
 
-        var ds = new PGSimpleDataSource(); 
+        var dataSource = new PGSimpleDataSource(); 
         
-        ds.setPassword(System.getenv("DB_PASSWORD"));
-        ds.setURL(jdbcUrl);
-        ds.setUser(userName);
+        dataSource.setPassword(System.getenv("DB_PASSWORD"));
+        dataSource.setURL(jdbcUrl);
+        dataSource.setUser(userName);
 
         return ds;
     }
@@ -90,16 +90,15 @@ public class App {
 
     private static void menu(Empresa empresa, Scanner sc) {
 
-        while(true) {
+        OUTER:
+        while (true) {
             System.out.println("====== TECH SOLUÇÕES ======");
-
             System.out.println("\n0. Administrador");
-
             for (Departamento depto : empresa.getDepartamentos()) {
                 System.out.println("\nDepartamento: " + depto.getName());
                 System.out.println("-".repeat(45));
-
-
+                
+                
                 for (Funcionario func : depto.getFuncionarios()) {
                     System.out.printf("%2d. %-15s %s%n",
                             func.getId(),
@@ -107,38 +106,41 @@ public class App {
                             "(" + func.getCargo() + ")");
                 }
             }
-
             try {
                 System.out.print("""
-                                 Faça login com seu Id 
-                                 (ou use '99' para encerrar o programa): """);
+                                                 Faça login com seu Id
+                                                 (ou use '99' para encerrar o programa): """);
                 int escolha = sc.nextInt();
                 sc.nextLine();
-
-                if (escolha == OPCAO_SAIDA) {
-                    System.out.println("Encerrando o sistema...");
-                    break;
-                } else if (escolha == OPCAO_ADMIN) {
-                    System.out.print("\nSenha de administrador: ");
-                    String form = sc.nextLine();
-                    if (Administrador.verificarSenha(form)) {
-                        limparTerminal();
-                        menuAdministrador(empresa, sc);
-                    } else {
-                        limparTerminal();
-                        break;
+                
+                switch (escolha) {
+                    case OPCAO_SAIDA -> {
+                        System.out.println("Encerrando o sistema...");
+                        break OUTER;
                     }
-                } else {
-                    Funcionario func = buscarFuncionario(empresa.getTodosFuncionarios(), escolha);
-                    if (func != null) {
-                        limparTerminal();
-                        menuFuncionario(func, sc);
-                    } else {
-                        System.out.println("❌ Funcionário não encontrado.");
-                        pausa(sc);
+                    case OPCAO_ADMIN -> {
+                        System.out.print("\nSenha de administrador: ");
+                        String form = sc.nextLine();
+                        if (Administrador.verificarSenha(form)) {
+                            limparTerminal();
+                            menuAdministrador(empresa, sc);
+                        } else {
+                            limparTerminal();
+                            break OUTER;
+                        }
+                    }
+                    default -> {
+                        Funcionario func = buscarFuncionario(empresa.getTodosFuncionarios(), escolha);
+                        if (func != null) {
+                            limparTerminal();
+                            menuFuncionario(func, sc);
+                        } else {
+                            System.out.println("❌ Funcionário não encontrado.");
+                            pausa(sc);
+                        }
                     }
                 }
-            } catch (InputMismatchException e){
+            }catch (InputMismatchException e){
                 System.out.println("ERRO - Digite apenas números: " + e.getMessage());
                 sc.nextLine();
                 pausa(sc);
@@ -298,8 +300,29 @@ public class App {
             }
             System.out.print("\nDescrição do pedido: ");
             String descricao = sc.nextLine();
+            
+            Pedido pedido = new Pedido(depto, itens, descricao);
 
-            depto.empresa.adicionarPedido(new Pedido(depto, itens, descricao));
+            depto.empresa.adicionarPedido(pedido);
+
+              String sql = "INSERT INTO pedidos (status, id, data, valor, itens, departamento, funcionario) "+
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+            try (Connection con = ConnectionFactory.getConnection()){
+                PreparedStatement st = con.prepareStatement(sql);
+                
+                st.setString(1, String.valueOf(pedido.getStatus()));
+                st.setInt(2, pedido.getId());
+                st.setDate(3, java.sql.Date.valueOf(pedido.getData()));
+                st.setDouble(4, pedido.getValor());
+                st.setString(5, pedido.getItens());
+                st.setString(6, String.valueOf(pedido.getDepartamento()));
+                st.setString(7, String.valueOf(pedido.getFunc()));
+                st.executeUpdate();
+
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
 
             pausa(sc);
             limparTerminal();
@@ -326,7 +349,7 @@ public class App {
                                (4)Buscar pedidos por Funcion\u00e1rio
                                (5)Buscar pedidos por descri\u00e7\u00e3o
                                (6)Valor total de pedidos
-                               (7)Pedidos dos \u00faltimos 30 dias
+                               (7)Pedidos dos últimos 30 dias
                                (8)Pedido mais caro em aberto
                                (9)Fazer pedido
                                (0)Retornar ao menu""");

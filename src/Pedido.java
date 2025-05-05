@@ -1,5 +1,6 @@
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class Pedido {
@@ -7,8 +8,8 @@ public class Pedido {
     enum Status {
         EM_ANALISE, APROVADO, REJEITADO
     }
+    Random rand = new Random();
     private Status status;
-    private static int LAST_ID = 1000;
     private int id;
     private List<Item> itens;
     private LocalDate data;
@@ -21,7 +22,7 @@ public class Pedido {
         this.itens = itens;
         this.data = LocalDate.now();
         this.valor = getPrecoTotal();
-        this.id = ++LAST_ID;
+        this.id = rand.nextInt(100000);
         this.depto = depto;
         this.func = func;
         this.status = Status.EM_ANALISE;
@@ -32,7 +33,7 @@ public class Pedido {
         this.itens = itens;
         this.data = LocalDate.now();
         this.valor = getPrecoTotal();
-        this.id = ++LAST_ID;
+        this.id = rand.nextInt(100000);
         this.depto = depto;
         this.func = new Funcionario("Administrador");
         this.status = Status.EM_ANALISE;

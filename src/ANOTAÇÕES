@@ -1,1 +1,5 @@
-
+Adequar tudo para funcionar com o Banco sem depender da Lista de Pedidos:
+    Metodos de Administrador:
+        valorTotalPedidos
+        pedidoMaisCaro
+        
