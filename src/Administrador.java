@@ -22,26 +22,7 @@ public class Administrador {
             int i = 1;
 
             while(rs.next()){
-                String status = rs.getString("status");
-                int id = rs.getInt("id");
-                Date data = rs.getDate("data");
-                double valor = rs.getDouble("valor");
-                String itens = rs.getString("itens");
-                String depto = rs.getString("departamento");
-                String func = rs.getString("funcionario");
-
-                System.out.printf("""
-                        %dº PEDIDO
-                        Status : %s;
-                        Id: %d;
-                        Data: %s;
-                        Valor: $%.2f;
-                        Itens: %s;
-                        Departamento: %s;
-                        Funcionário: %s.
-                        """, i, status, id, data, valor, itens,
-                            depto, func);
-                System.out.println("-=".repeat(15));
+                imprimirPedido(rs, i);
                 i++;
             }
 
@@ -99,27 +80,8 @@ public class Administrador {
             ResultSet rs = st.executeQuery();
             int i = 1;
             while (rs.next()){
-                String status = rs.getString("status");
-                int id = rs.getInt("id");
-                Date data = rs.getDate("data");
-                double valor = rs.getDouble("valor");
-                String itens = rs.getString("itens");
-                String depto = rs.getString("departamento");
-                String func = rs.getString("funcionario");
-
-                System.out.printf("""
-                        %dº PEDIDO
-                        Status : %s;
-                        Id: %d;
-                        Data: %s;
-                        Valor: $%.2f;
-                        Itens: %s;
-                        Departamento: %s;
-                        Funcionário: %s.
-                        """, i, status, id, data, valor, itens,
-                            depto, func);
+                imprimirPedido(rs, i);
                 i++;
-                System.out.println("-=".repeat(15));
             }
 
         } catch (SQLException e){
@@ -156,6 +118,8 @@ public class Administrador {
             System.out.print("\nConfirme a REJEIÇÃO do pedido: ");
             int confirmacao = sc.nextInt();
             if (confirmacao == 2) {
+                novoStatus = "REJEITADO";
+                statusAlterado = true;
             } else {
                 System.out.println("Ações não convergem!");
             }
@@ -195,27 +159,8 @@ public class Administrador {
 
  
             while (rs.next()){
-                String status = rs.getString("status");
-                int id = rs.getInt("id");
-                Date data = rs.getDate("data");
-                double valor = rs.getDouble("valor");
-                String itens = rs.getString("itens");
-                String depto = rs.getString("departamento");
-                String func = rs.getString("funcionario");
-
-                System.out.printf("""
-                        %dº PEDIDO
-                        Status : %s;
-                        Id: %d;
-                        Data: %s;
-                        Valor: $%.2f;
-                        Itens: %s;
-                        Departamento: %s;
-                        Funcionário: %s.
-                        """, i, status, id, data, valor, itens,
-                            depto, func);
+                imprimirPedido(rs, i);
                 i++;
-                    System.out.println("-=".repeat(15));
             }
             encontrou = true;
         } catch (SQLException e){
@@ -253,47 +198,76 @@ public class Administrador {
     }
 
     public static void valorTotalPedidos(Empresa empresa, Scanner sc){
-        List<Pedido> pedidos = empresa.getTodosPedidos();
+        String sql = "SELECT SUM(valor) AS Total_pedidos FROM pedidos";
 
-        double valorTotal = 0;
-        for(Pedido pedido : pedidos) {
-            valorTotal += pedido.getValor();
+        try (Connection con = ConnectionFactory.getConnection()) {
+            PreparedStatement st = con.prepareStatement(sql);   
+            ResultSet rs = st.executeQuery();
+
+            while(rs.next()){
+                double totalPedidos = rs.getDouble("Total_pedidos");
+                
+                System.out.printf("""
+                    Total: $%.2f
+                    """, totalPedidos);
+            }
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
         }
-
-        System.out.println("Valor total em pedidos: R$" + valorTotal);
 
     }
 
     public static void pedidosRecentes(Empresa empresa, Scanner sc){
-        List<Pedido> pedidos = empresa.getTodosPedidos();
-        LocalDate hoje = LocalDate.now();
+        String sql = "SELECT * FROM pedidos WHERE data BETWEEN ? AND ?";
 
-        for (Pedido pedido : pedidos){
-            if (calcularDias(hoje, pedido.getData()) <= 30){
-                System.out.println(pedido);
+        try(Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            
+            LocalDate data1 = LocalDate.now().minusDays(30);
+            LocalDate data2 = LocalDate.now();
+
+            st.setDate(1, java.sql.Date.valueOf(data1));
+            st.setDate(2, java.sql.Date.valueOf(data2));
+            ResultSet rs = st.executeQuery();
+
+            int i = 1;
+            while(rs.next()){
+                imprimirPedido(rs, i);
+                i++;
             }
+            if(i == 1){
+                System.out.println("Nenhum pedido nos últimos 30 dias");
+            }
+
+        } catch (SQLException e){
+            System.out.println("Erro: " + e.getMessage());
         }
 
     }
 
     public static void pedidoMaisCaro(Empresa empresa, Scanner sc){
-        List<Pedido> pedidos = empresa.getTodosPedidos();
-        Pedido pedidoMaisCaro = new Pedido(0);
-
+        String sql = "SELECT * FROM pedidos ORDER BY valor DESC";
         boolean encontrou = false;
-        for(Pedido pedido : pedidos) {
-            if (pedido.getValor() > pedidoMaisCaro.getValor() && pedido.getStatus().equals(Pedido.Status.EM_ANALISE)){
-                pedidoMaisCaro = pedido;
+
+        try (Connection con = ConnectionFactory.getConnection()){
+            PreparedStatement st = con.prepareStatement(sql);
+            ResultSet rs = st.executeQuery();
+        
+            int i = 1;
+            while(rs.next()){
+                imprimirPedido(rs, i);
                 encontrou = true;
+                i++;
             }
+
+            if (!encontrou) {
+                System.out.println("Nenhum pedido encontrado");
+            }
+
+        } catch (SQLException e){
+            System.out.println("Erro: " + e.getMessage());
         }
 
-        System.out.println("Pedido mais caro em análise: \n");
-        System.out.println(pedidoMaisCaro);
-
-        if (!encontrou) {
-            System.out.println("Nenhum pedido encontrado");
-        }
     }
 
     //AUTENTICAÇÃO
@@ -319,16 +293,34 @@ public class Administrador {
             
             ResultSet rs = st.executeQuery();
 
-            if (rs.next()){
-                int retrieve = rs.getInt("id");
-                return retrieve == id;
-            }
-
+            return rs.next();
         } catch (SQLException e){
             System.out.println(e.getMessage());
+            return false;
         }
+    }
 
-        return false;
+    private static void imprimirPedido(ResultSet rs, int i) throws SQLException{
+        String status = rs.getString("status");
+        int id = rs.getInt("id");
+        Date data = rs.getDate("data");
+        double valor = rs.getDouble("valor");
+        String itens = rs.getString("itens");
+        String departamento = rs.getString("departamento");
+        String func = rs.getString("funcionario");
+
+        System.out.printf("""
+                %dº PEDIDO
+                Status : %s;
+                Id: %d;
+                Data: %s;
+                Valor: $%.2f;
+                Itens: %s;
+                Departamento: %s;
+                Funcionário: %s.
+                """, i, status, id, data, valor, itens,
+                    departamento, func);
+        System.out.println("-=".repeat(15));
     }
     
 }
